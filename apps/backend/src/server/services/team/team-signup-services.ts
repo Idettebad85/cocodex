@@ -1,4 +1,7 @@
-import { CloudMailClient, createReadableCloudMailAddress } from "@workspace/cloud-mail";
+import {
+  CloudMailClient,
+  createReadableCloudMailAddress,
+} from "@workspace/cloud-mail";
 import * as openaiApiModule from "@workspace/openai-api";
 import { getTeamMemberAccountByEmail } from "@workspace/database";
 import * as signupModule from "@workspace/openai-signup";
@@ -12,7 +15,11 @@ const TEAM_SIGNUP_SAVE_TIMEOUT_MS = Math.max(
   Math.trunc(Number(process.env.TEAM_SIGNUP_SAVE_TIMEOUT_MS ?? 45_000)),
 );
 
-async function withTimeout<T>(label: string, timeoutMs: number, run: () => Promise<T>): Promise<T> {
+async function withTimeout<T>(
+  label: string,
+  timeoutMs: number,
+  run: () => Promise<T>,
+): Promise<T> {
   let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
   try {
     return await Promise.race([
@@ -198,7 +205,9 @@ export function createTeamSignupServices(deps: {
       }
       return email;
     };
-    const proxyPool = deps.ownerSignupProxyUrl ? [deps.ownerSignupProxyUrl] : [];
+    const proxyPool = deps.ownerSignupProxyUrl
+      ? [deps.ownerSignupProxyUrl]
+      : [];
     const preparedEmails: string[] = [];
 
     if (options.ownerEmail) {
@@ -251,7 +260,10 @@ export function createTeamSignupServices(deps: {
         ownerAccountId: owner.accountId,
         ownerAccessToken,
       });
-      const effectiveAvailableSlots = Math.max(0, availableSlots - pendingInvites);
+      const effectiveAvailableSlots = Math.max(
+        0,
+        availableSlots - pendingInvites,
+      );
       const inviteCount = Math.min(options.count, effectiveAvailableSlots);
       console.info(
         `[team-signup] fill-members owner=${owner.email} currentMembers=${owner.teamMemberCount ?? 0} pendingInvites=${pendingInvites} availableSlots=${effectiveAvailableSlots} inviteCount=${inviteCount}`,
@@ -300,7 +312,11 @@ export function createTeamSignupServices(deps: {
         }
         return createAndMaybeInviteEmail();
       },
-      waitForOtp: async (email: string, timeoutMs?: number, pollIntervalMs?: number) =>
+      waitForOtp: async (
+        email: string,
+        timeoutMs?: number,
+        pollIntervalMs?: number,
+      ) =>
         cloudMail.waitForOpenAiOtp({
           accountEmail: email,
           toEmail: email,
@@ -350,9 +366,14 @@ export function createTeamSignupServices(deps: {
                   query: "",
                   userAgent: runtimeConfig.userAgent,
                 }),
-            )) as { items?: Array<{ email?: string | null; id?: string | null }> };
+            )) as {
+              items?: Array<{ email?: string | null; id?: string | null }>;
+            };
             const matchedUser =
-              (Array.isArray(usersPayload?.items) ? usersPayload.items : []).find(
+              (Array.isArray(usersPayload?.items)
+                ? usersPayload.items
+                : []
+              ).find(
                 (item: { email?: string | null; id?: string | null }) =>
                   item.email?.trim().toLowerCase() === normalizedEmail &&
                   typeof item.id === "string" &&
@@ -401,16 +422,22 @@ export function createTeamSignupServices(deps: {
     const persistAccount = async (account: SignupFlowAccount) => {
       try {
         console.info(`[team-signup] persist start email=${account.email}`);
-        console.info(`[team-signup] persist rate-limit-start email=${account.email}`);
+        console.info(
+          `[team-signup] persist rate-limit-start email=${account.email}`,
+        );
         const rateLimit = await withTimeout(
           `resolve rate limit ${account.email}`,
           TEAM_SIGNUP_SAVE_TIMEOUT_MS,
           () => deps.resolveRateLimitForAccount(account, runtimeConfig),
         );
-        console.info(`[team-signup] persist rate-limit-done email=${account.email}`);
+        console.info(
+          `[team-signup] persist rate-limit-done email=${account.email}`,
+        );
         let refreshToken: string | null = null;
         try {
-          console.info(`[team-signup] persist codex-refresh-start email=${account.email}`);
+          console.info(
+            `[team-signup] persist codex-refresh-start email=${account.email}`,
+          );
           const codexAuth = await withTimeout(
             `exchange codex refresh token ${account.email}`,
             TEAM_SIGNUP_SAVE_TIMEOUT_MS,
@@ -422,36 +449,46 @@ export function createTeamSignupServices(deps: {
               }),
           );
           refreshToken = codexAuth.refreshToken;
-          console.info(`[team-signup] persist codex-refresh-done email=${account.email}`);
+          console.info(
+            `[team-signup] persist codex-refresh-done email=${account.email}`,
+          );
         } catch (error) {
           console.warn(
             `[team-signup] codex refresh bootstrap failed for ${account.email}: ${error instanceof Error ? error.message : String(error)}`,
           );
         }
-        console.info(`[team-signup] persist upsert-start email=${account.email}`);
-        await withTimeout(`upsert team member ${account.email}`, TEAM_SIGNUP_SAVE_TIMEOUT_MS, () =>
-          deps.upsertTeamMemberAccount({
-            email: account.email,
-            userId: account.userId,
-            portalUserId: options.portalUserId ?? null,
-            name: account.name,
-            accountId: account.accountId,
-            workspaceName: ownerContext?.workspaceName ?? account.workspaceName,
-            planType: ownerContext?.planType ?? account.planType,
-            teamMemberCount: ownerContext?.teamMemberCount ?? null,
-            teamExpiresAt: ownerContext?.teamExpiresAt ?? null,
-            workspaceIsDeactivated: account.workspaceIsDeactivated,
-            workspaceCancelledAt: account.workspaceCancelledAt,
-            status: account.workspaceIsDeactivated ? "disabled" : "active",
-            accessToken: account.accessToken,
-            refreshToken,
-            password: account.password,
-            systemCreated: true,
-            type: account.type,
-            rateLimit,
-          }),
+        console.info(
+          `[team-signup] persist upsert-start email=${account.email}`,
         );
-        console.info(`[team-signup] persist upsert-done email=${account.email}`);
+        await withTimeout(
+          `upsert team member ${account.email}`,
+          TEAM_SIGNUP_SAVE_TIMEOUT_MS,
+          () =>
+            deps.upsertTeamMemberAccount({
+              email: account.email,
+              userId: account.userId,
+              portalUserId: options.portalUserId ?? null,
+              name: account.name,
+              accountId: account.accountId,
+              workspaceName:
+                ownerContext?.workspaceName ?? account.workspaceName,
+              planType: ownerContext?.planType ?? account.planType,
+              teamMemberCount: ownerContext?.teamMemberCount ?? null,
+              teamExpiresAt: ownerContext?.teamExpiresAt ?? null,
+              workspaceIsDeactivated: account.workspaceIsDeactivated,
+              workspaceCancelledAt: account.workspaceCancelledAt,
+              status: account.workspaceIsDeactivated ? "disabled" : "active",
+              accessToken: account.accessToken,
+              refreshToken,
+              password: account.password,
+              systemCreated: true,
+              type: account.type,
+              rateLimit,
+            }),
+        );
+        console.info(
+          `[team-signup] persist upsert-done email=${account.email}`,
+        );
         createdCount += 1;
         createdEmails.push(account.email);
         console.info(
@@ -469,7 +506,9 @@ export function createTeamSignupServices(deps: {
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error(`[team-signup] save team member failed for ${account.email}: ${message}`);
+        console.error(
+          `[team-signup] save team member failed for ${account.email}: ${message}`,
+        );
         saveFailures.push(message);
       }
     };
@@ -512,7 +551,9 @@ export function createTeamSignupServices(deps: {
           }),
       )) as { items?: Array<{ email?: string | null; id?: string | null }> };
       const teamUsersByEmail = new Map<string, string>();
-      for (const item of Array.isArray(usersPayload.items) ? usersPayload.items : []) {
+      for (const item of Array.isArray(usersPayload.items)
+        ? usersPayload.items
+        : []) {
         const email = item.email?.trim().toLowerCase() ?? "";
         const userId = item.id?.trim() ?? "";
         if (!email || !userId) continue;
@@ -556,7 +597,10 @@ export function createTeamSignupServices(deps: {
       proxyPool,
       includeResults: false,
       mailProvider,
-      onResult: async (result: { ok?: boolean; account?: SignupFlowAccount }) => {
+      onResult: async (result: {
+        ok?: boolean;
+        account?: SignupFlowAccount;
+      }) => {
         if (result?.ok && result.account) {
           await persistAccount(result.account);
         }
@@ -592,6 +636,7 @@ export function createTeamSignupServices(deps: {
     count: number;
     concurrency: number;
     domains: string[];
+    portalUserId?: string;
     ensureNotStopped?: () => void;
     onAccountSaved?: (savedCount: number) => void | Promise<void>;
   }): Promise<TeamOwnerSignupExecutionResult> {
@@ -617,7 +662,11 @@ export function createTeamSignupServices(deps: {
         inboxes.set(email, inbox);
         return email;
       },
-      waitForOtp: async (email: string, timeoutMs?: number, pollIntervalMs?: number) => {
+      waitForOtp: async (
+        email: string,
+        timeoutMs?: number,
+        pollIntervalMs?: number,
+      ) => {
         let inbox = inboxes.get(email);
         if (!inbox) {
           inbox = deps.createCloudMailInbox();
@@ -629,7 +678,10 @@ export function createTeamSignupServices(deps: {
     };
     const persistAccount = async (account: SignupFlowAccount) => {
       try {
-        const rateLimit = await deps.resolveRateLimitForAccount(account, runtimeConfig);
+        const rateLimit = await deps.resolveRateLimitForAccount(
+          account,
+          runtimeConfig,
+        );
         let refreshToken: string | null = null;
         try {
           const codexAuth = await deps.exchangeCodexRefreshToken({
@@ -646,6 +698,7 @@ export function createTeamSignupServices(deps: {
         await deps.upsertTeamOwnerAccount({
           email: account.email,
           userId: account.userId,
+          portalUserId: options.portalUserId ?? null,
           name: account.name,
           accountId: account.accountId,
           workspaceName: account.workspaceName,
@@ -665,7 +718,9 @@ export function createTeamSignupServices(deps: {
         await options.onAccountSaved?.(createdCount);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error(`[team-signup] save team owner failed for ${account.email}: ${message}`);
+        console.error(
+          `[team-signup] save team owner failed for ${account.email}: ${message}`,
+        );
         saveFailures.push(message);
       }
     };
@@ -674,7 +729,10 @@ export function createTeamSignupServices(deps: {
       concurrency: Math.max(1, Math.min(options.concurrency, options.count)),
       includeResults: false,
       mailProvider,
-      onResult: async (result: { ok?: boolean; account?: SignupFlowAccount }) => {
+      onResult: async (result: {
+        ok?: boolean;
+        account?: SignupFlowAccount;
+      }) => {
         if (result?.ok && result.account) {
           await persistAccount(result.account);
         }

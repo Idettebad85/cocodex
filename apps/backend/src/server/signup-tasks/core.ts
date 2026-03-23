@@ -80,7 +80,8 @@ function formatTaskDuration(durationMs: number | null) {
   if (totalSeconds < 60) return `${totalSeconds}s`;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  if (minutes < 60) return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+  if (minutes < 60)
+    return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   const remainMinutes = minutes % 60;
   return remainMinutes > 0 ? `${hours}h ${remainMinutes}m` : `${hours}h`;
@@ -101,7 +102,8 @@ function extractTaskResultSummary(task: SignupTask): {
         ? Math.max(0, Math.floor(failedCountValue))
         : 0,
     successCount:
-      typeof successCountValue === "number" && Number.isFinite(successCountValue)
+      typeof successCountValue === "number" &&
+      Number.isFinite(successCountValue)
         ? Math.max(0, Math.floor(successCountValue))
         : task.savedCount,
   };
@@ -113,8 +115,7 @@ function buildUserFacingTaskError(task: SignupTask): string | null {
   const genericByKind: Record<SignupTaskKind, string> = {
     openai: "The signup task did not complete successfully.",
     "team-member": "The team member signup task did not complete successfully.",
-    "team-member-fill":
-      "The fill-members task did not complete successfully.",
+    "team-member-fill": "The fill-members task did not complete successfully.",
     "team-member-join":
       "The team member join task did not complete successfully.",
     "team-owner": "The team owner signup task did not complete successfully.",
@@ -123,7 +124,10 @@ function buildUserFacingTaskError(task: SignupTask): string | null {
   return genericByKind[task.kind];
 }
 
-function buildSignupTaskNotification(task: SignupTask): { title: string; body: string } {
+function buildSignupTaskNotification(task: SignupTask): {
+  title: string;
+  body: string;
+} {
   const status = task.status;
   const savedSummary = `${task.savedCount}/${task.count}`;
   const duration = formatTaskDuration(task.durationMs);
@@ -235,9 +239,12 @@ async function persistTerminalSignupTask(task: SignupTask, deps: any) {
   await notifySignupTaskCompletion(task, deps);
 }
 
-export function resolveSignupTaskKindFromResult(result: unknown): SignupTaskKind {
+export function resolveSignupTaskKindFromResult(
+  result: unknown,
+): SignupTaskKind {
   if (isRecord(result) && result.kind === "team-member") return "team-member";
-  if (isRecord(result) && result.kind === "team-member-fill") return "team-member-fill";
+  if (isRecord(result) && result.kind === "team-member-fill")
+    return "team-member-fill";
   if (isRecord(result) && result.kind === "team-member-join") {
     return "team-member-join";
   }
@@ -271,7 +278,9 @@ function pruneSignupTasksInMemory() {
     .sort((a, b) => {
       const aMs = Date.parse(a.createdAt);
       const bMs = Date.parse(b.createdAt);
-      return (Number.isFinite(aMs) ? aMs : 0) - (Number.isFinite(bMs) ? bMs : 0);
+      return (
+        (Number.isFinite(aMs) ? aMs : 0) - (Number.isFinite(bMs) ? bMs : 0)
+      );
     });
 
   for (const task of terminalTasks) {
@@ -297,9 +306,10 @@ export async function persistSignupTask(task: SignupTask, deps: any) {
       finishedAt: task.finishedAt,
       durationMs: task.durationMs,
       error: task.error,
-      result:
-        ((summarizeSignupResult(task.result) as Record<string, unknown> | null) ??
-          { kind: task.kind }) as Record<string, unknown> | null,
+      result: ((summarizeSignupResult(task.result) as Record<
+        string,
+        unknown
+      > | null) ?? { kind: task.kind }) as Record<string, unknown> | null,
     });
   } catch (error) {
     console.warn(
@@ -417,6 +427,7 @@ async function executeSignupTask(taskId: string, deps: any) {
           count: task.count,
           concurrency: task.concurrency,
           domains: control.cloudMailDomains ?? [],
+          portalUserId: control.requesterUserId,
           ensureNotStopped,
           onAccountSaved: async (savedCount: number) => {
             const currentTask = state.tasks.get(taskId);
@@ -450,7 +461,9 @@ async function executeSignupTask(taskId: string, deps: any) {
           `[signup] task ${task.id} completed with ${execution.saveFailures.length} team-member save failures`,
         );
         for (const failure of execution.saveFailures) {
-          console.error(`[signup] task ${task.id} team-member save failure: ${failure}`);
+          console.error(
+            `[signup] task ${task.id} team-member save failure: ${failure}`,
+          );
         }
       }
       await persistTerminalSignupTask(task, deps);
@@ -509,14 +522,17 @@ async function executeSignupTask(taskId: string, deps: any) {
       const firstFailure = execution.saveFailures[0] ?? null;
       task.error =
         task.status === "failed"
-          ? (firstFailure ?? "No team members were created and joined successfully")
+          ? (firstFailure ??
+            "No team members were created and joined successfully")
           : firstFailure;
       if (execution.saveFailures.length > 0) {
         console.warn(
           `[signup] task ${task.id} completed with ${execution.saveFailures.length} team-member-fill save failures`,
         );
         for (const failure of execution.saveFailures) {
-          console.error(`[signup] task ${task.id} team-member-fill save failure: ${failure}`);
+          console.error(
+            `[signup] task ${task.id} team-member-fill save failure: ${failure}`,
+          );
         }
       }
       await persistTerminalSignupTask(task, deps);
@@ -563,8 +579,9 @@ async function executeSignupTask(taskId: string, deps: any) {
       task.durationMs = Date.now() - startedAt;
       task.error =
         task.status === "failed"
-          ? (execution.results.find((item: { ok: boolean; error?: string }) => !item.ok)
-              ?.error ?? "No team members were joined successfully")
+          ? (execution.results.find(
+              (item: { ok: boolean; error?: string }) => !item.ok,
+            )?.error ?? "No team members were joined successfully")
           : null;
       await persistTerminalSignupTask(task, deps);
       pruneSignupTasksInMemory();
@@ -577,6 +594,7 @@ async function executeSignupTask(taskId: string, deps: any) {
           count: task.count,
           concurrency: task.concurrency,
           domains: control.ownerMailDomains ?? [],
+          portalUserId: control.requesterUserId,
           ensureNotStopped,
           onAccountSaved: async (savedCount: number) => {
             const currentTask = state.tasks.get(taskId);
@@ -610,7 +628,9 @@ async function executeSignupTask(taskId: string, deps: any) {
           `[signup] task ${task.id} completed with ${execution.saveFailures.length} team-owner save failures`,
         );
         for (const failure of execution.saveFailures) {
-          console.error(`[signup] task ${task.id} team-owner save failure: ${failure}`);
+          console.error(
+            `[signup] task ${task.id} team-owner save failure: ${failure}`,
+          );
         }
       }
       await persistTerminalSignupTask(task, deps);
@@ -631,7 +651,10 @@ async function executeSignupTask(taskId: string, deps: any) {
     const runtimeConfig = await deps.getOpenAIApiRuntimeConfig();
     const persistAccount = async (account: SignupFlowAccount) => {
       ensureNotStopped();
-      const rateLimit = await deps.resolveRateLimitForAccount(account, runtimeConfig);
+      const rateLimit = await deps.resolveRateLimitForAccount(
+        account,
+        runtimeConfig,
+      );
       const saved = await deps.upsertOpenAIAccount({
         email: account.email,
         userId: account.userId,
