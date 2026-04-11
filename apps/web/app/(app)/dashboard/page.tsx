@@ -19,6 +19,7 @@ import {
   Sigma,
   Users,
 } from "lucide-react";
+import { LRUCache } from "lru-cache";
 import { ModelHourlyTokensChartClient } from "@/components/charts/model-hourly-tokens-chart-client";
 import { getServerTranslator } from "@/lib/i18n/i18n";
 import { requireAuth } from "@/lib/auth/require-admin";
@@ -35,43 +36,55 @@ type DashboardSummaryData = {
 
 type DashboardChartData = Awaited<ReturnType<typeof getModelHourlyStatsSeries>>;
 
-type DashboardCacheEntry<T> = {
-  expiresAt: number;
-  value: T;
-};
-
 const DASHBOARD_SUMMARY_CACHE_TTL_MS = 15_000;
 const DASHBOARD_CHART_CACHE_TTL_MS = 60_000;
-const dashboardCache =
+
+// LRU cache: max 200 entries (100 users × 2 keys), TTL enforced per entry.
+// Stored on globalThis so the same instance is reused across hot-reloads in dev.
+type DashboardCacheValue =
+  | DashboardSummaryData
+  | DashboardChartData
+  | Promise<DashboardSummaryData | DashboardChartData>;
+const dashboardCache: LRUCache<string, DashboardCacheValue> =
   (
     globalThis as {
-      __workspaceDashboardCache?: Map<string, DashboardCacheEntry<unknown>>;
+      __workspaceDashboardCache?: LRUCache<string, DashboardCacheValue>;
     }
   ).__workspaceDashboardCache ??
-  new Map<string, DashboardCacheEntry<unknown>>();
+  new LRUCache<string, DashboardCacheValue>({
+    max: 200,
+    ttl: DASHBOARD_CHART_CACHE_TTL_MS,
+  });
 
 (
   globalThis as {
-    __workspaceDashboardCache?: Map<string, DashboardCacheEntry<unknown>>;
+    __workspaceDashboardCache?: LRUCache<string, DashboardCacheValue>;
   }
 ).__workspaceDashboardCache = dashboardCache;
 
-async function getCached<T>(
+async function getCached<T extends DashboardSummaryData | DashboardChartData>(
   key: string,
   ttlMs: number,
   loader: () => Promise<T>,
 ): Promise<T> {
-  const now = Date.now();
   const cached = dashboardCache.get(key);
-  if (cached && cached.expiresAt > now) {
-    return cached.value as T;
+  if (cached !== undefined) {
+    // May be a pending Promise (in-flight dedup) or a resolved value.
+    return cached as Promise<T> | T;
   }
-  const value = await loader();
-  dashboardCache.set(key, {
-    expiresAt: now + ttlMs,
-    value,
-  });
-  return value;
+  // Store the Promise immediately so concurrent requests await the same fetch.
+  const promise = loader()
+    .then((value) => {
+      dashboardCache.set(key, value, { ttl: ttlMs });
+      return value;
+    })
+    .catch((err) => {
+      // On failure, evict so the next request retries rather than hanging.
+      dashboardCache.delete(key);
+      throw err;
+    });
+  dashboardCache.set(key, promise, { ttl: ttlMs });
+  return promise;
 }
 
 async function loadDashboardSummaryCached(

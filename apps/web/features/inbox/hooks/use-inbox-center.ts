@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import type { LocaleKey } from "@/locales";
 import type { InboxMessage } from "@/lib/features/inbox/types/inbox-types";
-import { mapInboxMessage, normalizeUnreadCount } from "@/lib/features/inbox/utils/inbox-utils";
+import {
+  mapInboxMessage,
+  normalizeUnreadCount,
+} from "@/lib/features/inbox/utils/inbox-utils";
 
 export function useInboxCenter(props: {
   detailId: string;
@@ -72,7 +75,9 @@ export function useInboxCenter(props: {
       }
     } catch (error) {
       if (showError) {
-        toast.error(error instanceof Error ? error.message : t("inbox.loadFailed"));
+        toast.error(
+          error instanceof Error ? error.message : t("inbox.loadFailed"),
+        );
       }
     } finally {
       setLoading(false);
@@ -81,6 +86,31 @@ export function useInboxCenter(props: {
   };
 
   const markRead = async (ids?: string[]) => {
+    // Snapshot current state for rollback on failure.
+    let prevItems: InboxMessage[] | null = null;
+    let prevDetail: InboxMessage | null = null;
+
+    const readAt = new Date().toISOString();
+    if (isDetailView) {
+      setDetail((prev) => {
+        prevDetail = prev;
+        return prev && (!ids || ids.includes(prev.id))
+          ? { ...prev, readAt }
+          : prev;
+      });
+    } else {
+      setItems((prev) => {
+        prevItems = prev;
+        return unreadOnly
+          ? ids && ids.length > 0
+            ? prev.filter((item) => !ids.includes(item.id))
+            : []
+          : prev.map((item) =>
+              !ids || ids.includes(item.id) ? { ...item, readAt } : item,
+            );
+      });
+    }
+
     try {
       const res = await fetch("/api/inbox", {
         method: "PATCH",
@@ -94,22 +124,14 @@ export function useInboxCenter(props: {
       if (!res.ok) {
         throw new Error(data.error ?? t("inbox.readFailed"));
       }
-
-      const readAt = new Date().toISOString();
-      if (isDetailView) {
-        setDetail((prev) => (prev && (!ids || ids.includes(prev.id)) ? { ...prev, readAt } : prev));
-      } else {
-        setItems((prev) =>
-          unreadOnly
-            ? ids && ids.length > 0
-              ? prev.filter((item) => !ids.includes(item.id))
-              : []
-            : prev.map((item) => (!ids || ids.includes(item.id) ? { ...item, readAt } : item)),
-        );
-      }
       setUnreadCount(normalizeUnreadCount(data.unreadCount));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("inbox.readFailed"));
+      // Rollback optimistic update on failure.
+      if (prevItems !== null) setItems(prevItems);
+      if (prevDetail !== null) setDetail(prevDetail);
+      toast.error(
+        error instanceof Error ? error.message : t("inbox.readFailed"),
+      );
     }
   };
 
@@ -130,7 +152,9 @@ export function useInboxCenter(props: {
       setUnreadCount(normalizeUnreadCount(data.unreadCount));
       return true;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("inbox.deleteFailed"));
+      toast.error(
+        error instanceof Error ? error.message : t("inbox.deleteFailed"),
+      );
       return false;
     }
   };

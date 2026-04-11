@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import type { LocaleKey } from "@/locales";
-import type { SavedAccountSummary, SubmitMode, WorkspaceChoice } from "@/lib/features/accounts/types/account-types";
-import { emptyForm, resetLoginState } from "@/lib/features/accounts/utils/account-utils";
+import type {
+  LoginPhase,
+  SavedAccountSummary,
+  SubmitMode,
+} from "@/lib/features/accounts/types/account-types";
+import { emptyForm } from "@/lib/features/accounts/utils/account-utils";
 import { useAccountLoginActions } from "./use-account-login-actions";
 
 export function useAccountSubmitFlow(props: {
@@ -25,20 +29,18 @@ export function useAccountSubmitFlow(props: {
   const [submitMode, setSubmitMode] = useState<SubmitMode>("create");
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [loginSessionId, setLoginSessionId] = useState<string | null>(null);
-  const [requiresManualOtp, setRequiresManualOtp] = useState(false);
-  const [workspaceChoices, setWorkspaceChoices] = useState<WorkspaceChoice[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
 
+  // FSM: single phase state replaces loginSessionId + requiresManualOtp + workspaceChoices.
+  // Legal transitions: idle → credentials → pending_otp | pending_workspace → done
+  const [phase, setPhase] = useState<LoginPhase>({ type: "idle" });
+
   const closeSubmitDialog = () => {
-    const next = resetLoginState();
     setSubmitOpen(false);
     setSubmitMode("create");
-    setForm(next.form);
-    setLoginSessionId(next.loginSessionId);
-    setRequiresManualOtp(next.requiresManualOtp);
-    setWorkspaceChoices(next.workspaceChoices);
-    setSelectedWorkspaceId(next.selectedWorkspaceId);
+    setForm(emptyForm());
+    setSelectedWorkspaceId("");
+    setPhase({ type: "idle" });
   };
 
   const {
@@ -52,16 +54,14 @@ export function useAccountSubmitFlow(props: {
     refresh,
     submitMode,
     form,
-    loginSessionId,
+    phase,
     selectedWorkspaceId,
     setActingEmail,
     setSubmitOpen,
     setSubmitting,
     setSubmitMode,
     setForm,
-    setLoginSessionId,
-    setRequiresManualOtp,
-    setWorkspaceChoices,
+    setPhase,
     setSelectedWorkspaceId,
     onAccountSaved,
   });
@@ -71,10 +71,15 @@ export function useAccountSubmitFlow(props: {
     submitMode,
     submitting,
     form,
-    loginSessionId,
-    requiresManualOtp,
-    workspaceChoices,
+    phase,
     selectedWorkspaceId,
+    // Derived helpers kept for backward-compatible consumption in UI components.
+    loginSessionId:
+      phase.type === "pending_otp" || phase.type === "pending_workspace"
+        ? phase.sessionId
+        : null,
+    requiresManualOtp: phase.type === "pending_otp",
+    workspaceChoices: phase.type === "pending_workspace" ? phase.choices : [],
     setSubmitOpen,
     setSubmitMode,
     setSelectedWorkspaceId,

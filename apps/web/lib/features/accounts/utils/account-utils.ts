@@ -1,4 +1,7 @@
-import type { OpenAIAccountRecord, TeamAccountRecord } from "@workspace/database";
+import type {
+  OpenAIAccountRecord,
+  TeamAccountRecord,
+} from "@workspace/database";
 import type {
   AccountItem,
   AccountKind,
@@ -30,8 +33,14 @@ export function buildAccountItems(
   };
 
   return [
-    ...openaiAccounts.map((item) => ({ ...item, kind: resolveAccountKind(item) })),
-    ...teamAccounts.map((item) => ({ ...item, kind: resolveAccountKind(item) })),
+    ...openaiAccounts.map((item) => ({
+      ...item,
+      kind: resolveAccountKind(item),
+    })),
+    ...teamAccounts.map((item) => ({
+      ...item,
+      kind: resolveAccountKind(item),
+    })),
   ].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
 
@@ -85,13 +94,19 @@ export function formatResetAfter(seconds?: number) {
   return remainMinutes > 0 ? `${hours}h ${remainMinutes}m` : `${hours}h`;
 }
 
-export function getKindLabel(kind: AccountKind, t: (key: AccountTranslationKey) => string) {
+export function getKindLabel(
+  kind: AccountKind,
+  t: (key: AccountTranslationKey) => string,
+) {
   if (kind === "openai") return t("accounts.kindOpenAI");
   if (kind === "team-owner") return t("accounts.kindTeamOwner");
   return t("accounts.kindTeamMember");
 }
 
-export function getStatusLabel(item: AccountItem, t: (key: AccountTranslationKey) => string) {
+export function getStatusLabel(
+  item: AccountItem,
+  t: (key: AccountTranslationKey) => string,
+) {
   if ("status" in item) {
     const status = (item.status ?? "").trim().toLowerCase();
     if (status === "disabled") return t("status.disabled");
@@ -157,6 +172,10 @@ export function resetLoginState() {
   };
 }
 
+export function initialLoginPhase(): import("../types/account-types").LoginPhase {
+  return { type: "idle" };
+}
+
 export function shouldPromptTeamOwnerFill(
   account: SavedAccountSummary | null,
   mode: SubmitMode,
@@ -183,7 +202,8 @@ export function selectContentProps() {
 
 export function normalizeTeamMemberRole(role: string | null) {
   const normalized = (role ?? "").trim().toLowerCase();
-  if (normalized === "account-owner" || normalized === "owner") return "团队拥有者";
+  if (normalized === "account-owner" || normalized === "owner")
+    return "团队拥有者";
   if (normalized === "standard-user" || normalized === "member") return "成员";
   if (!normalized) return "-";
   return normalized;

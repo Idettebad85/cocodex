@@ -1,8 +1,13 @@
-import type { OpenAIAccountRecord, TeamAccountRecord } from "@workspace/database";
+import type {
+  OpenAIAccountRecord,
+  TeamAccountRecord,
+} from "@workspace/database";
 
 export type AccountKind = "openai" | "team-owner" | "team-member";
 export type AccountFilterKind = "all" | AccountKind | "plus";
-export type AccountItem = (OpenAIAccountRecord | TeamAccountRecord) & { kind: AccountKind };
+export type AccountItem = (OpenAIAccountRecord | TeamAccountRecord) & {
+  kind: AccountKind;
+};
 
 export type ConfirmDialogState = {
   open: boolean;
@@ -21,6 +26,23 @@ export type WorkspaceChoice = {
   kind: string | null;
   planType: string | null;
 };
+
+/**
+ * Finite state machine for the account login flow.
+ *
+ * Legal transitions:
+ *   idle ──startLogin──► credentials
+ *   credentials ──submit──► pending_otp | pending_workspace | done
+ *   pending_otp ──verifyOtp──► pending_workspace | done
+ *   pending_workspace ──selectWorkspace──► done
+ *   any ──reset──► idle
+ */
+export type LoginPhase =
+  | { type: "idle" }
+  | { type: "credentials" }
+  | { type: "pending_otp"; sessionId: string }
+  | { type: "pending_workspace"; sessionId: string; choices: WorkspaceChoice[] }
+  | { type: "done" };
 
 export type SavedAccountSummary = {
   email: string;
