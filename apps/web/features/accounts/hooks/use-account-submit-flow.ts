@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { LocaleKey } from "@/locales";
+import { transitionLoginPhase } from "@/lib/features/accounts/types/account-types";
 import type {
   LoginPhase,
   SavedAccountSummary,
@@ -40,7 +41,7 @@ export function useAccountSubmitFlow(props: {
     setSubmitMode("create");
     setForm(emptyForm());
     setSelectedWorkspaceId("");
-    setPhase({ type: "idle" });
+    setPhase((prev) => transitionLoginPhase(prev, { type: "RESET" }));
   };
 
   const {

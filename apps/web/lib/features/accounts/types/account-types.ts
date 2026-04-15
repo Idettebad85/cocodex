@@ -31,11 +31,15 @@ export type WorkspaceChoice = {
  * Finite state machine for the account login flow.
  *
  * Legal transitions:
- *   idle ──startLogin──► credentials
- *   credentials ──submit──► pending_otp | pending_workspace | done
- *   pending_otp ──verifyOtp──► pending_workspace | done
- *   pending_workspace ──selectWorkspace──► done
- *   any ──reset──► idle
+ *   idle ──START──► credentials
+ *   credentials ──OTP_REQUIRED──► pending_otp
+ *   credentials ──WORKSPACE_REQUIRED──► pending_workspace
+ *   credentials ──SUCCESS──► done
+ *   credentials ──ERROR──► idle
+ *   pending_otp ──WORKSPACE_REQUIRED──► pending_workspace
+ *   pending_otp ──SUCCESS──► done
+ *   pending_workspace ──SUCCESS──► done
+ *   any ──RESET──► idle
  */
 export type LoginPhase =
   | { type: "idle" }
@@ -43,6 +47,55 @@ export type LoginPhase =
   | { type: "pending_otp"; sessionId: string }
   | { type: "pending_workspace"; sessionId: string; choices: WorkspaceChoice[] }
   | { type: "done" };
+
+export type LoginEvent =
+  | { type: "START" }
+  | { type: "OTP_REQUIRED"; sessionId: string }
+  | {
+      type: "WORKSPACE_REQUIRED";
+      sessionId: string;
+      choices: WorkspaceChoice[];
+    }
+  | { type: "SUCCESS" }
+  | { type: "ERROR" }
+  | { type: "RESET" };
+
+export function transitionLoginPhase(
+  phase: LoginPhase,
+  event: LoginEvent,
+): LoginPhase {
+  switch (phase.type) {
+    case "idle":
+      if (event.type === "START") return { type: "credentials" };
+      break;
+    case "credentials":
+      if (event.type === "OTP_REQUIRED")
+        return { type: "pending_otp", sessionId: event.sessionId };
+      if (event.type === "WORKSPACE_REQUIRED")
+        return {
+          type: "pending_workspace",
+          sessionId: event.sessionId,
+          choices: event.choices,
+        };
+      if (event.type === "SUCCESS") return { type: "done" };
+      if (event.type === "ERROR") return { type: "idle" };
+      break;
+    case "pending_otp":
+      if (event.type === "WORKSPACE_REQUIRED")
+        return {
+          type: "pending_workspace",
+          sessionId: event.sessionId,
+          choices: event.choices,
+        };
+      if (event.type === "SUCCESS") return { type: "done" };
+      break;
+    case "pending_workspace":
+      if (event.type === "SUCCESS") return { type: "done" };
+      break;
+  }
+  if (event.type === "RESET") return { type: "idle" };
+  return phase;
+}
 
 export type SavedAccountSummary = {
   email: string;

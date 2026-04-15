@@ -1,6 +1,7 @@
 "use client";
 
 import type { LocaleKey } from "@/locales";
+import { transitionLoginPhase } from "@/lib/features/accounts/types/account-types";
 import type {
   AccountItem,
   LoginPhase,
@@ -68,7 +69,7 @@ export function useAccountLoginActions(props: {
         ? t("team.reloginSuccess").replace("{email}", successEmail)
         : t("accounts.created"),
     );
-    setPhase({ type: "done" });
+    setPhase((prev) => transitionLoginPhase(prev, { type: "SUCCESS" }));
     setSubmitOpen(false);
     setForm(emptyForm());
     refresh();
@@ -89,7 +90,7 @@ export function useAccountLoginActions(props: {
       return;
     }
     setSubmitting(true);
-    setPhase({ type: "credentials" });
+    setPhase((prev) => transitionLoginPhase(prev, { type: "START" }));
     try {
       const data = await startAccountLogin({
         email,
@@ -103,26 +104,31 @@ export function useAccountLoginActions(props: {
           : { password: form.password.trim() }),
       });
       if (data?.requiresOtp && data.sessionId) {
-        // credentials → pending_otp
-        setPhase({ type: "pending_otp", sessionId: data.sessionId });
+        setPhase((prev) =>
+          transitionLoginPhase(prev, {
+            type: "OTP_REQUIRED",
+            sessionId: data.sessionId!,
+          }),
+        );
         if (options?.openDialogOnInteraction) setSubmitOpen(true);
         toast.info(t("accounts.otpRequired"));
         return;
       }
       if (data?.requiresWorkspace && data.sessionId) {
-        // credentials → pending_workspace
-        setPhase({
-          type: "pending_workspace",
-          sessionId: data.sessionId,
-          choices: Array.isArray(data.workspaces) ? data.workspaces : [],
-        });
+        setPhase((prev) =>
+          transitionLoginPhase(prev, {
+            type: "WORKSPACE_REQUIRED",
+            sessionId: data.sessionId!,
+            choices: Array.isArray(data.workspaces) ? data.workspaces : [],
+          }),
+        );
         if (options?.openDialogOnInteraction) setSubmitOpen(true);
         toast.info(t("accounts.workspaceRequired"));
         return;
       }
       await finishLogin(data?.account ?? null, mode, email);
     } catch (error) {
-      setPhase({ type: "idle" });
+      setPhase((prev) => transitionLoginPhase(prev, { type: "ERROR" }));
       toast.error(
         error instanceof Error ? error.message : t("accounts.submitFailed"),
       );
@@ -147,12 +153,13 @@ export function useAccountLoginActions(props: {
     try {
       const data = await verifyAccountOtp({ sessionId: phase.sessionId, code });
       if (data?.requiresWorkspace && data.sessionId) {
-        // pending_otp → pending_workspace
-        setPhase({
-          type: "pending_workspace",
-          sessionId: data.sessionId,
-          choices: Array.isArray(data.workspaces) ? data.workspaces : [],
-        });
+        setPhase((prev) =>
+          transitionLoginPhase(prev, {
+            type: "WORKSPACE_REQUIRED",
+            sessionId: data.sessionId!,
+            choices: Array.isArray(data.workspaces) ? data.workspaces : [],
+          }),
+        );
         setSelectedWorkspaceId("");
         toast.info(t("accounts.workspaceRequired"));
         return;
@@ -202,7 +209,7 @@ export function useAccountLoginActions(props: {
     setActingEmail(item.email);
     setSubmitMode("relogin");
     setSubmitOpen(true);
-    setPhase({ type: "idle" });
+    setPhase((prev) => transitionLoginPhase(prev, { type: "RESET" }));
     setForm({ email: item.email, password: "", otpCode: "" });
     void startLogin({
       openDialogOnInteraction: true,
